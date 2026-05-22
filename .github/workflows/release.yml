@@ -17,11 +17,20 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish
-        run: dotnet publish FerrariX.csproj -c Release -r win-x64 --self-contained false -o publish
+      - name: Publish single-file exe
+        run: |
+          dotnet publish FerrariX.csproj -c Release -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -o publish
 
-      - name: Crear ZIP
-        run: Compress-Archive -Path publish\* -DestinationPath FerrariX-${{ github.ref_name }}.zip
+      - name: Crear ZIP (exe + placeholder Xeno.dll)
+        run: |
+          New-Item -Path publish -Name "PON_AQUI_Xeno.dll" -ItemType File | Out-Null
+          Compress-Archive -Path publish\FerrariX.exe, publish\PON_AQUI_Xeno.dll `
+            -DestinationPath FerrariX-${{ github.ref_name }}.zip
 
       - name: Crear Release
         uses: softprops/action-gh-release@v2
@@ -31,12 +40,10 @@ jobs:
             ## FerrariX ${{ github.ref_name }}
 
             ### Instalación
-            1. Descarga el ZIP
-            2. Extrae en una carpeta
-            3. Copia `Xeno.dll` (de tu instalación de Xeno) en la misma carpeta
-            4. Ejecuta `Start.bat` (detecta .NET 8 automáticamente)
+            1. Descarga el ZIP y extrae en una carpeta
+            2. Copia `Xeno.dll` (de tu instalación de Xeno) en la misma carpeta
+            3. Ejecuta `FerrariX.exe` — no requiere instalar nada más
 
             ### Requisitos
             - Windows 10/11 x64
-            - [.NET 8 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
             - Xeno instalado (para obtener `Xeno.dll`)
